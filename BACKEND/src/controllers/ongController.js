@@ -1,17 +1,38 @@
 const crypto = require('crypto');
+const yup = require('yup');
+
 const connection = require('../database/connection');
 
 module.exports = {
   async store (req, res) {
-    const { name, email, whatsapp, city, uf } = req.body;
+    const schema = yup.object().shape({
+      name: yup.string()
+        .required(),
+      email: yup.string()
+        .email()
+        .required(),
+      whatsapp: yup.string()
+        .required(),
+      city: yup.string()
+        .required(),
+      uf: yup.string()
+        .required()
+        .max(2),    
+    });
 
-    const id = crypto.randomBytes(4).toString('HEX');
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ erro: 'Validation fails' });
+    }
+
+    const { name, email, whatsapp, city, uf } = req.body;
 
     const notExist = await connection('ongs').where('name', name).first();
 
     if (notExist) {
       return res.status(400).json({ error: 'User already exist'});
     }
+
+    const id = crypto.randomBytes(4).toString('HEX');
 
     await connection('ongs').insert({
       id,
@@ -22,22 +43,38 @@ module.exports = {
       uf,
     })
 
-    return res.json({ id });
+    return res.status(200).json({ id });
   },
 
   async show (req, res) {
-    const ongs = await connection('ongs').select('*');
+    try{
+      const ongs = await connection('ongs').select('*');
 
-    return res.json(ongs);
+      return res.status(200).json(ongs);
+    } catch (error) {
+      return res.status(500).json({
+        message: 'geting ong operation failed',
+        error,
+      });
+    }
   },
 
   async delete (req, res) {
-    const ong_id = req.headers.authorization;
+    try{
+      const ong_id = req.headers.authorization;
 
-    await connection('ongs').where('id', ong_id).delete();
+      await connection('ongs')
+        .join('incidents', 'incidents.ong_id', '=', 'ongs.id')
+        .where('id', ong_id)
+        .delete();
 
-    await connection('incidents').where('ong_id', ong_id).delete('*');
+      return res.status(204).send();
 
-    return res.status(204).send();
+     } catch (error) {
+       return res.status(500).json({
+         message: 'Geting ong operation failed',
+         error,
+       });
+     }     
   }
 };

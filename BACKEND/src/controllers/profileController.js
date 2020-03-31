@@ -2,21 +2,28 @@ const connection = require ('../database/connection');
 
 module.exports = {
   async showSpecific (req, res) {
-    const ong_id = req.headers.authorization
+    try{
+      const ong_id = req.headers.authorization
 
-    const isValid = await connection('ongs').where('id', ong_id).first();
+      const isValid = await connection('ongs').where('id', ong_id).first();
 
-    if (!isValid) {
-      return res.status(401).json({ error: 'Invalid autorizathion ID' });
-    }
-    
-    const incidents = await connection('incidents')
-      .where('ong_id', ong_id)
-      .select('*');
+      if (!isValid) {
+        return res.status(401).json({ error: 'Invalid autorizathion ID' });
+      }
       
-    return res.json({
-      Total: incidents.length,
-      Incidentes: incidents
-    });  
+      const incidents = await connection('incidents')
+        .where('ong_id', ong_id)
+        .select('*');
+        
+      return res.json({
+        Total: incidents.length,
+        Incidentes: incidents
+      });  
+    } catch (error) {
+      return res.status(500).json({
+        message: 'Geting profile operation failed',
+        error,
+      });
+    }  
   }
 };
