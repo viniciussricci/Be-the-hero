@@ -59,6 +59,53 @@ module.exports = {
     }
   },
 
+  async update (req, res) {
+     try{
+      const schema = yup.object().shape({
+        name: yup.string(),
+        email: yup.string().email(),
+        whatsapp: yup.string(),
+        city: yup.string(),
+        uf: yup.string().max(2),
+      });
+
+      if (!(await schema.isValid(req.body))) {
+        return res.status(400).json({ erro: 'Validation fails' });
+      }
+      
+      const ong_id = req.headers.authorization;
+      const { email } = req.body;
+
+      const Ong = await connection('ongs')
+        .where('id', ong_id)
+        .select('email');
+
+      if (email !== Ong.email) {
+        const ongExists = await connection('ongs')
+          .where('email', email)
+          .first();
+
+        if (ongExists) {
+          return res.status(400).json({ error: 'Email already exists' });  
+        }
+      }
+
+      await connection('ongs')
+        .update(req.body)
+        .where('id', ong_id);
+
+      return res.status(200).json({ 
+        message: 'Ong updated successfully'
+      });
+      
+    } catch (error) {
+      return res.status(500).json({
+        message: 'Geting ong operation failed',
+        error,
+      });
+    }
+  },
+
   async delete (req, res) {
     try{
       const ong_id = req.headers.authorization;
