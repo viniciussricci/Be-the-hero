@@ -60,7 +60,7 @@ module.exports = {
   },
 
   async update (req, res) {
-     try{
+    try{
       const schema = yup.object().shape({
         name: yup.string(),
         email: yup.string().email(),
@@ -74,19 +74,28 @@ module.exports = {
       }
       
       const ong_id = req.headers.authorization;
-      const { email } = req.body;
+      const { email = null, name = null } = req.body;
 
       const Ong = await connection('ongs')
         .where('id', ong_id)
-        .select('email');
+        .select('name', 'email')
+        .first(); 
 
-      if (email !== Ong.email) {
-        const ongExists = await connection('ongs')
+      if (email !== Ong.email || name !== Ong.name) {
+        const ongEmail = await connection('ongs')
           .where('email', email)
-          .first();
+          .first();  
+        
+        const ongName = await connection('ongs')
+          .where('name', name)
+          .first();  
 
-        if (ongExists) {
-          return res.status(400).json({ error: 'Email already exists' });  
+        if (ongEmail && ongName) {
+          return res.status(400).json({ error: 'Email and Name already exists' });  
+        } else if (ongEmail) {
+          return res.status(400).json({ error: 'Email already exists' });
+        } else if (ongName) {
+          return res.status(400).json({ error: 'Name already exists' });
         }
       }
 
@@ -95,12 +104,12 @@ module.exports = {
         .where('id', ong_id);
 
       return res.status(200).json({ 
-        message: 'Ong updated successfully'
+        message: 'ONG updated successfully'
       });
       
     } catch (error) {
       return res.status(500).json({
-        message: 'Geting ong operation failed',
+        message: 'Geting ONG operation failed',
         error,
       });
     }
