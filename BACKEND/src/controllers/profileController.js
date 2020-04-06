@@ -15,10 +15,7 @@ module.exports = {
         .where('ong_id', ong_id)
         .select('*');
         
-      return res.json({
-        Total: incidents.length,
-        Incidentes: incidents
-      });  
+      return res.json(incidents);  
     } catch (error) {
       return res.status(500).json({
         message: 'Geting profile operation failed',

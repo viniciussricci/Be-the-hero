@@ -29,7 +29,7 @@ module.exports = {
     const notExist = await connection('ongs').where('name', name).first();
 
     if (notExist) {
-      return res.status(400).json({ error: 'User already exist'});
+      return res.status(400).json({ error: 'Name already exist'});
     }
 
     const id = crypto.randomBytes(4).toString('HEX');

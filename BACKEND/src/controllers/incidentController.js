@@ -6,8 +6,8 @@ module.exports = {
   async store (req, res) {
     const schema = yup.object().shape({
       title: yup.string().required(),
-      description: yup.string().required().min(50),
-      value: yup.number().required().max(6),
+      description: yup.string().required(),
+      value: yup.number().required(),
     });
 
     if (!(await schema.isValid(req.body))) {
